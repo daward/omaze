@@ -6,7 +6,7 @@ const MazePositionAction = (evt) => {
   return {
     type: 'CHANGE_MAZE_POSITION',
     coordinates: coord
-  }
-}
+  };
+};
 
 export default MazePositionAction;

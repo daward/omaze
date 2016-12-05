@@ -32,17 +32,16 @@ class MazeView extends Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if (this.props.style !== prevProps.style) {
+    if (this.props.style !== prevProps.style || this.props.maze !== prevProps.maze) {
       this.paint();
     }
   }
 
   render() {
-    var self = this;
     return (
       <canvas ref="mazeview"
         id="mazeview"
-        style={{ position: "absolute", left: 0, top: 0, zIndex: 0 }}
+        style={{ position: "absolute", left: 0, top: 0, zIndex: -2 }}
         width={1520} height={1520}
         />
     );

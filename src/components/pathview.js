@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import WallPainter from './wallpainter.js';
 import PathPainter from './pathpainter.js';
 
 class PathView extends Component {
@@ -9,17 +8,17 @@ class PathView extends Component {
       this.props.maze,
       this.props.cellSize,
       this.props.padding);
-    this.sendEvent();
+    // this.sendEvent();
   }
 
-  sendEvent() {
-    setTimeout(() => {
-      if (this.event) {
-        this.props.mouseMove(this.event);
-      }
-      this.sendEvent();
-    }, 30);
-  }
+  // sendEvent() {
+  //   setTimeout(() => {
+  //     if (this.event) {
+  //       this.props.mouseMove(this.event);
+  //     }
+  //     this.sendEvent();
+  //   }, 30);
+  // }
 
   setEvent(evt) {
     var rect = evt.target.getBoundingClientRect();
@@ -27,6 +26,7 @@ class PathView extends Component {
       clientX: evt.clientX - rect.left,
       clientY: evt.clientY - rect.top
     };
+    this.props.mouseMove(this.event);
   }
 
   canvas() {
@@ -37,7 +37,7 @@ class PathView extends Component {
     var self = this;
     return (
       <canvas id="pathview" ref="pathview"
-        style={{position: "absolute", left: 0, top: 0, zIndex: 1}}
+        style={{ position: "absolute", left: 0, top: 0, zIndex: 0 }}
         width={1520} height={1520}
         onMouseMove={evt => self.setEvent(evt)}
         onTouchMove={evt => {
@@ -47,9 +47,16 @@ class PathView extends Component {
     );
   }
 
-  shouldComponentUpdate() {
+  componentDidUpdate(prevProps, prevState) {
+    if (this.props.maze !== prevProps.maze) {
+      this.canvas().clearRect(0, 0, 1520, 1520);
+      this.pathPainter = new PathPainter(
+        this.canvas(),
+        this.props.maze,
+        this.props.cellSize,
+        this.props.padding);
+    }
     this.pathPainter.paint(this.props.currentCell);
-    return false;
   }
 }
 

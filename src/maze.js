@@ -1,16 +1,20 @@
-var ndarray = require("ndarray"),
-  _ = require("lodash");
+import ndarray from "ndarray";
+import _ from "lodash";
 
-module.exports = function (width, height) {
-  var initial = [];
-  this.width = width;
-  this.height = height;
-  for (var i = 0; i < width * height; i++) {
-    initial.push({ south: true, east: true, visited: false });
+class Maze {
+  constructor(width, height) {
+    this.width = width;
+    this.height = height;
+
+    let initial = [];
+    for (var i = 0; i < width * height; i++) {
+      initial.push({ south: true, east: true, visited: false });
+    }
+
+    this.data = ndarray(initial, [width, height]);
   }
-  this.data = ndarray(initial, [width, height]);
 
-  this.getWall = (cell1, cell2) => {
+  getWall(cell1, cell2) {
     var diffX = cell1.x - cell2.x;
     var diffY = cell1.y - cell2.y;
     var cell1Data = this.data.get(cell1.x, cell1.y);
@@ -36,17 +40,17 @@ module.exports = function (width, height) {
       wallInit(cell1Data, "south");
     }
     return wall;
-  };
+  } 
 
-  this.visitFrom = (x, y, previousX, previousY) => {
+  visitFrom(x, y, previousX, previousY) {
     var current = this.data.get(x, y);
     current.visited = true;
 
     var wall = this.getWall({ x: x, y: y }, { x: previousX, y: previousY });
     wall.set(false);
-  };
+  }
 
-  this.visit = function (x, y) {
+  visit(x, y) {
     // if we have visited the space to the left, break
     // its southward wall
     this.data.get(x, y).visited = true;
@@ -56,13 +60,13 @@ module.exports = function (width, height) {
     }
     // if we have visited the space to the right, break
     // our southward wall
-    if (x < width && this.data.get(x + 1, y).visited) {
+    if (x < this.width && this.data.get(x + 1, y).visited) {
       this.data.get(x, y).south = false;
     }
 
     // if we have visited the space below, break
     // its eastward wall
-    if (y < height && this.data.get(x, y + 1).visited) {
+    if (y < this.height && this.data.get(x, y + 1).visited) {
       this.data.get(x, y).east = false;
     }
 
@@ -71,9 +75,9 @@ module.exports = function (width, height) {
     if (y > 0 && this.data.get(x, y - 1).visited) {
       this.data.get(x, y - 1).east = false;
     }
-  };
+  }
 
-  this.buildBranch = (x, y) => {
+  buildBranch(x, y) {
     var neighbors = this.getUnvistedNeighbors(x, y);
 
     if (neighbors.length) {
@@ -81,9 +85,9 @@ module.exports = function (width, height) {
       this.visitFrom(choice.x, choice.y, x, y);
       this.buildBranch(choice.x, choice.y);
     }
-  };
+  }
 
-  this.buildBranches = () => {
+  buildBranches() {
     var sources = this.getVisited();
     var iterations = 10000;
     while (sources.length && iterations) {
@@ -93,25 +97,25 @@ module.exports = function (width, height) {
       iterations--;
     }
     this.tidy();
-  };
+  }
 
-  this.tidy = () => {
+  tidy() {
     this.data.get(0, 0).south = false;
-  };
+  }
 
-  this.getVisited = () => {
+  getVisited() {
     var visited = [];
-    for (var x = 0; x < width; x++) {
-      for (var y = 0; y < height; y++) {
+    for (var x = 0; x < this.width; x++) {
+      for (var y = 0; y < this.height; y++) {
         if (this.data.get(x, y).visited) {
           visited.push({ x: x, y: y });
         }
       }
     }
     return visited;
-  };
+  }
 
-  this.getUnvistedNeighbors = (x, y) => {
+  getUnvistedNeighbors(x, y) {
     return _(this.getNeighborCoords(x, y))
       .map(coord => {
         return {
@@ -122,54 +126,62 @@ module.exports = function (width, height) {
       })
       .filter(neighbor => !neighbor.data.visited)
       .value();
-  };
+  }
 
-  this.getNeighborCoords = (x, y) => {
+  getNeighborCoords(x, y) {
     var coords = [];
     coords.push({ x: x - 1, y: y });
     coords.push({ x: x + 1, y: y });
     coords.push({ x: x, y: y - 1 });
     coords.push({ x: x, y: y + 1 });
     return _.filter(coords,
-      coord => coord.x >= 0 && coord.y >= 0 && coord.x < width && coord.y < height)
-  };
+      coord => coord.x >= 0 && coord.y >= 0 && coord.x < this.width && coord.y < this.height);
+  }
 
-  this.attemptReach = (cell) => {
-    var neighbors = this.getReachableNeighbors(cell);
+  canReach(cell) {
+    // off the grid
+    if(!this.data.get(cell.x, cell.y)) {
+      return false;
+    }
 
+    // if there is a neighbor we have already reached
+    // then we can get here
+    var neighbors = this.getReachedNeighbors(cell);
+
+    // if we have a neighbor we've reached before,
+    // then mark this one as reached
     if (neighbors.length) {
       this.data.get(cell.x, cell.y).reached = true;
     }
-    return neighbors.length
-  };
+    return neighbors.length;
+  }
 
-  this.getReachableNeighbors = (cell) => {
+  getReachedNeighbors(cell) {
     return _(this.getNeighborCoords(cell.x, cell.y))
       .filter(neighbor =>
         this.data.get(neighbor.x, neighbor.y).reached &&
         !this.getWall(cell, neighbor).get()
       ).value();
-  };
+  }
 
-  this.getNeighbors = (cell) => {
-     return _(this.getNeighborCoords(cell.x, cell.y))
+  getNeighbors (cell) {
+    return _(this.getNeighborCoords(cell.x, cell.y))
       .filter(neighbor =>
         !this.getWall(cell, neighbor).get()
       ).value();
-  };
+  }
 
-  this.getWalls = function (cell) {
+  getWalls(cell) {
     var walls = {};
-    var neighbors = this.getReachableNeighbors(cell);
+    var neighbors = this.getReachedNeighbors(cell);
     walls.left = !_.filter(neighbors, neighbor => neighbor.x < cell.x).length;
     walls.right = !_.filter(neighbors, neighbor => neighbor.x > cell.x).length;
     walls.top = !_.filter(neighbors, neighbor => neighbor.y < cell.y).length;
     walls.bottom = !_.filter(neighbors, neighbor => neighbor.y > cell.y).length;
     return walls;
-  };
+  }
 
-  
-  this.getCellWalls = function (cell) {
+  getCellWalls(cell) {
     var walls = {};
     var neighbors = this.getNeighbors(cell);
     walls.left = !_.filter(neighbors, neighbor => neighbor.x < cell.x).length;
@@ -177,5 +189,7 @@ module.exports = function (width, height) {
     walls.top = !_.filter(neighbors, neighbor => neighbor.y < cell.y).length;
     walls.bottom = !_.filter(neighbors, neighbor => neighbor.y > cell.y).length;
     return walls;
-  };
-};
+  }
+}
+
+module.exports = Maze;

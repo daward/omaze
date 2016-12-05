@@ -19,7 +19,6 @@ class Maze extends Component {
           maze={this.props.maze}
           cellSize={this.props.cellSize}
           currentCell={this.props.currentCell}
-          winner={this.props.winner}
           mouseMove={this.props.mouseMove}
           padding={8}>
         </PathView>
@@ -30,8 +29,8 @@ class Maze extends Component {
 
 const mapStateToProps = (state) => {
   return {
-    maze: state.mazeTracking.maze,
-    cellSize: state.mazeTracking.cellSize,
+    maze: state.mazeStructure.maze,
+    cellSize: state.mazeStructure.cellSize,
     currentCell: state.mazeTracking.currentCell,
     winner: state.mazeTracking.winner,
     style: state.style.style

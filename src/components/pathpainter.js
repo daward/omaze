@@ -9,7 +9,7 @@ class PathPainter {
   paint(currentCell) {
     this.context.beginPath();
     this.context.fillStyle = "rgba(255, 0, 0, 0.04)";
-    this.maze.getReachableNeighbors(currentCell)
+    this.maze.getReachedNeighbors(currentCell)
       .forEach(neighbor => this.paintPath(currentCell, neighbor));
 
     this.context.beginPath();
